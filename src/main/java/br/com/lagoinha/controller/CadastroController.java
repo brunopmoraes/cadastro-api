@@ -47,7 +47,7 @@ public class CadastroController {
     /**
      * Endpoint para obter um cadastro por CPF.
      *
-     * @param cpf - CPF a ser consultado
+     * @param id - ID a ser consultado
      * @return cadastro encontrado ou erro
      */
     @Operation(summary = "Obtém um cadastro por CPF")
@@ -57,13 +57,10 @@ public class CadastroController {
             @ApiResponse(responseCode = "404", description = "Cadastro não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
     })
-    @GetMapping("/{cpf}")
-    public ResponseEntity<Cadastro> getCadastro(@PathVariable String cpf) {
-        if (!Validador.isCpfValid(cpf)) {
-            return ResponseEntity.badRequest().build(); // Retorna 400 se o CPF for inválido
-        }
+    @GetMapping("/{id}")
+    public ResponseEntity<Cadastro> getCadastro(@PathVariable String id) {
         try {
-            Cadastro cadastro = cadastroService.getCadastro(cpf);
+            Cadastro cadastro = cadastroService.getCadastroById(id);
             return ResponseEntity.ok(cadastro); // Retorna 200 com o cadastro
         } catch (CadastroNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 se o cadastro não for encontrado
@@ -169,7 +166,7 @@ public class CadastroController {
     /**
      * Atualiza um cadastro existente.
      *
-     * @param cpf - CPF do cadastro a ser atualizado
+     * @param id - ID do cadastro a ser atualizado
      * @param cadastro - dados atualizados do cadastro
      * @return ResponseEntity com o status da operação
      */
@@ -179,10 +176,10 @@ public class CadastroController {
             @ApiResponse(responseCode = "404", description = "Cadastro não encontrado."),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
     })
-    @PutMapping("/{cpf}")
-    public ResponseEntity<Void> updateCadastro(@PathVariable String cpf, @RequestBody Cadastro cadastro) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateCadastro(@PathVariable String id, @RequestBody Cadastro cadastro) {
         try {
-            cadastroService.update(cpf, cadastro);
+            cadastroService.update(id, cadastro);
             return ResponseEntity.ok().build(); // Retorna 200 OK após atualização
         } catch (CadastroNotFoundException e) {
             return ResponseEntity.notFound().build(); // Retorna 404 se não encontrado

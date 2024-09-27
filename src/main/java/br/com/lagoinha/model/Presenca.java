@@ -15,6 +15,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 public class Presenca {
     private String id;
     private String cpf;
+    private String cadastroId;
     private String timestamp;
     private String aula;
 

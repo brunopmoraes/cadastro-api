@@ -22,18 +22,18 @@ public class PresencaController {
     /**
      * Busca presenças por CPF.
      *
-     * @param cpf CPF do usuário cujas presenças serão buscadas
+     * @param cadastroId Id do cadastro cujas presenças serão buscadas
      * @return ResponseEntity com a lista de presenças ou 404 caso não seja encontrado
      */
-    @Operation(summary = "Busca presenças por CPF", description = "Retorna uma lista de presenças associadas ao CPF fornecido.")
+    @Operation(summary = "Busca presenças por Cadastro ID", description = "Retorna uma lista de presenças associadas ao Cadastro ID fornecido.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de presenças retornada."),
             @ApiResponse(responseCode = "404", description = "Nenhuma presença encontrada para o CPF fornecido."),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
     })
-    @GetMapping("/cpf/{cpf}")
-    public ResponseEntity<List<Presenca>> getPresencasByCpf(@PathVariable String cpf) {
-        List<Presenca> presencas = presencaService.getPresencasByCpf(cpf);
+    @GetMapping("/id/{cadastroId}")
+    public ResponseEntity<List<Presenca>> getPresencasById(@PathVariable String cadastroId) {
+        List<Presenca> presencas = presencaService.getPresencasByCadastroID(cadastroId);
 
         if (presencas.isEmpty()) {
             return ResponseEntity.notFound().build();  // Retorna 404 se nenhuma presença for encontrada

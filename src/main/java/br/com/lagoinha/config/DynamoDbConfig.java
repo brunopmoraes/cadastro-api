@@ -1,10 +1,9 @@
-package br.com.lagoinha.config;
+package br.com.lagoinha.client;
 
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
 @Configuration
@@ -26,19 +25,25 @@ public class DynamoDbConfig {
 
     public void createTables() {
         CreateTableRequest cadastroTable = CreateTableRequest.builder()
-                .tableName("Cadastro")
-                .keySchema(KeySchemaElement.builder().attributeName("cpf").keyType("HASH").build())
-                .attributeDefinitions(AttributeDefinition.builder().attributeName("cpf").attributeType(ScalarAttributeType.S).build())
+                .tableName("cadastros")
+                .keySchema(
+                        KeySchemaElement.builder().attributeName("cpf").keyType("HASH").build()
+//                        KeySchemaElement.builder().attributeName("cpf").keyType("RANGE").build()
+                )
+                .attributeDefinitions(
+                        AttributeDefinition.builder().attributeName("cpf").attributeType(ScalarAttributeType.S).build()         // Tipo String para id
+//                        AttributeDefinition.builder().attributeName("cpf").attributeType(ScalarAttributeType.S).build()   // Tipo String para timestamp (ou N para número se for timestamp numérico)
+                )
                 .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())
                 .build();
 
         CreateTableRequest presencaTable = CreateTableRequest.builder()
-                .tableName("Presenca")
+                .tableName("presencas")
                 .keySchema(
-                        KeySchemaElement.builder().attributeName("cpf").keyType("HASH").build(),
+                        KeySchemaElement.builder().attributeName("cadastroId").keyType("HASH").build(),
                         KeySchemaElement.builder().attributeName("aula").keyType("RANGE").build())
                 .attributeDefinitions(
-                        AttributeDefinition.builder().attributeName("cpf").attributeType(ScalarAttributeType.S).build(),         // Tipo String para id
+                        AttributeDefinition.builder().attributeName("cadastroId").attributeType(ScalarAttributeType.S).build(),         // Tipo String para id
                         AttributeDefinition.builder().attributeName("aula").attributeType(ScalarAttributeType.S).build()   // Tipo String para timestamp (ou N para número se for timestamp numérico)
                 )
                 .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())

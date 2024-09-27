@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Service
@@ -18,13 +19,15 @@ public class PresencaService {
         return presencaRepository.findAll();
     }
 
-    // Read Presenca by CPF
-    public List<Presenca> getPresencasByCpf(String cpf) {
-        return presencaRepository.findByCpf(cpf);
+    // Read Presenca by cadastroId
+    public List<Presenca> getPresencasByCadastroID(String cadastroId) {
+        return presencaRepository.findByCadastroId(cadastroId);
     }
 
     // Create Presenca
     public void addPresenca(Presenca presenca) {
+        String presencaId = UUID.randomUUID().toString();
+        presenca.setId(presencaId);
         presencaRepository.save(presenca);
     }
 
