@@ -5,23 +5,18 @@ import br.com.lagoinha.model.Cadastro;
 import br.com.lagoinha.model.Presenca;
 import br.com.lagoinha.repository.CadastroRepository;
 import br.com.lagoinha.repository.PresencaRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-
+@AllArgsConstructor
 @Service
 public class CadastroService {
     private final CadastroRepository cadastroRepository;
     private final PresencaRepository presencaRepository;
-
-    // Injeção de dependências via construtor (Princípio da Inversão de Dependência - SOLID)
-    public CadastroService(CadastroRepository cadastroRepository, PresencaRepository presencaRepository) {
-        this.cadastroRepository = cadastroRepository;
-        this.presencaRepository = presencaRepository;
-    }
 
     /**
      * Cria um cadastro.
@@ -32,8 +27,8 @@ public class CadastroService {
         cadastroRepository.save(cadastro);
     }
 
-    public void update(String cpf, Cadastro cadastro) {
-        Cadastro _cadastro = cadastroRepository.findByCpf(cpf);
+    public void update(String id, Cadastro cadastro) {
+        Cadastro _cadastro = cadastroRepository.findById(id);
         if (Objects.isNull(_cadastro)) {
             throw new CadastroNotFoundException("Cadastro não encontrado");
         }
@@ -54,6 +49,9 @@ public class CadastroService {
         if (cadastro.isCertificado() != _cadastro.isCertificado()) {
             _cadastro.setCertificado(cadastro.isCertificado());
         }
+        if (cadastro.getCpf() != null && !cadastro.getCpf().equals(_cadastro.getCpf())) {
+            _cadastro.setCpf(cadastro.getCpf());
+        }
 
         // Salva as alterações
         cadastroRepository.save(_cadastro);
@@ -62,17 +60,17 @@ public class CadastroService {
     /**
      * Busca um cadastro por CPF.
      *
-     * @param cpf CPF a ser buscado
+     * @param id Id a ser buscado
      * @return Cadastro encontrado com total de presenças
      * @throws CadastroNotFoundException se o cadastro não for encontrado
      */
-    public Cadastro getCadastro(String cpf) {
-        Cadastro cadastro = cadastroRepository.findByCpf(cpf);
+    public Cadastro getCadastroById(String id) {
+        Cadastro cadastro = cadastroRepository.findById(id);
         if (Objects.isNull(cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado para o CPF: " + cpf);
+            throw new CadastroNotFoundException("Cadastro não encontrado para o Id: " + id);
         }
 
-        List<Presenca> presencas = presencaRepository.findByCpf(cpf);
+        List<Presenca> presencas = presencaRepository.findByCadastroId(id);
         cadastro.setPresencas(presencas);
         // Conta o total de presenças e atualiza no cadastro
         long totalPresencas = presencas.size();
@@ -83,12 +81,12 @@ public class CadastroService {
     /**
      * Exclui um cadastro por CPF.
      *
-     * @param cpf CPF do cadastro a ser excluído
+     * @param id ID do cadastro a ser excluído
      */
-    public void deleteCadastro(String cpf) {
-        Cadastro cadastro = cadastroRepository.findByCpf(cpf);
+    public void deleteCadastro(String id) {
+        Cadastro cadastro = cadastroRepository.findById(id);
         if (Objects.isNull(cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado para o CPF: " + cpf);
+            throw new CadastroNotFoundException("Cadastro não encontrado para o ID: " + id);
         }
         cadastroRepository.delete(cadastro);
     }
@@ -102,7 +100,7 @@ public class CadastroService {
         return cadastroRepository.findAll()
                 .stream()
                 .peek(cadastro -> {
-                    List<Presenca> presencas = presencaRepository.findByCpf(cadastro.getCpf());
+                    List<Presenca> presencas = presencaRepository.findByCadastroId(cadastro.getId());
                     cadastro.setPresencas(presencas);
                     cadastro.setTotalPresencas(presencas.size());
                 })
@@ -112,14 +110,14 @@ public class CadastroService {
     /**
      * Confirma o recebimento do certificado para um cadastro.
      *
-     * @param cpf CPF do cadastro a ser atualizado
+     * @param id ID do cadastro a ser atualizado
      * @return Cadastro atualizado
      * @throws CadastroNotFoundException se o cadastro não for encontrado
      */
-    public Cadastro confirmarCertificado(String cpf) {
-        Cadastro cadastro = cadastroRepository.findByCpf(cpf);
+    public Cadastro confirmarCertificado(String id) {
+        Cadastro cadastro = cadastroRepository.findById(id);
         if (Objects.isNull(cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado para o CPF: " + cpf);
+            throw new CadastroNotFoundException("Cadastro não encontrado para o ID: " + id);
         }
 
         // Atualiza o campo de certificado e salva
@@ -136,7 +134,7 @@ public class CadastroService {
     public List<Cadastro> completosSemCertificado() {
         return cadastroRepository.findSemCertificado()
                 .stream()
-                .peek(cadastro -> cadastro.setTotalPresencas(presencaRepository.countByCpf(cadastro.getCpf())))
+                .peek(cadastro -> cadastro.setTotalPresencas(presencaRepository.countByCadastroId(cadastro.getId())))
                 .filter(cadastro -> cadastro.getTotalPresencas() == 8)
                 .collect(Collectors.toList());
     }

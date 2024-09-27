@@ -50,6 +50,31 @@
             <version>1.18.20</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Google Sheets API -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>1.32.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson2</artifactId>
+            <version>1.41.5</version> <!-- Verifique se há uma versão mais recente, se necessário -->
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>1.3.0</version> <!-- Verifique por versões mais recentes, se necessário -->
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-sheets</artifactId>
+            <version>v4-rev612-1.25.0</version> <!-- Dependência da API do Google Sheets -->
+        </dependency>
     </dependencies>
 
     <build>

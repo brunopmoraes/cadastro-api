@@ -17,6 +17,7 @@ import java.util.List;
 @DynamoDbBean
 public class Cadastro {
 
+    private String id;
     private String cpf;
     private String nomeCompleto;
     private String sexo;
@@ -24,12 +25,12 @@ public class Cadastro {
     private String celular;
     private boolean certificado;
     private List<Presenca> presencas;
-    // Campo adicional para armazenar o total de presenças
     private long totalPresencas;
 
     @DynamoDbPartitionKey
-    public String getCpf() {
-        return cpf;
+    public String getId() {
+        return id;
+
     }
 
     // Método getter para o CPF formatado

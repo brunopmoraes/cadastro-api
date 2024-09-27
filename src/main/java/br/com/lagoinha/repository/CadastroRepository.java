@@ -30,14 +30,14 @@ public class CadastroRepository {
     /**
      * Busca um cadastro pelo CPF.
      *
-     * @param cpf CPF do cadastro a ser buscado.
+     * @param id Id do cadastro a ser buscado.
      * @return O cadastro encontrado ou null se não existir.
      */
-    public Cadastro findByCpf(String cpf) {
-        Key key = Key.builder()
-                .partitionValue(cpf)  // Define a chave de partição (CPF) para o DynamoDB.
-                .build();
-        return cadastroTable.getItem(key);
+    public Cadastro findById(String id) {
+        return cadastroTable.scan().items()
+                .stream()
+                .filter(cadastro -> cadastro.getId().equals(id))
+                .findFirst().orElse(null);
     }
 
     /**
