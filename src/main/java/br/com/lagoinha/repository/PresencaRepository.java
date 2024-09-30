@@ -6,7 +6,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -15,11 +15,9 @@ import java.util.stream.Collectors;
 @Repository
 public class PresencaRepository {
 
-    private final DynamoDbEnhancedClient enhancedClient;
     private final DynamoDbTable<Presenca> presencaTable;
 
     public PresencaRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.enhancedClient = enhancedClient;
         this.presencaTable = enhancedClient.table("Presenca", TableSchema.fromBean(Presenca.class));
     }
 
@@ -33,27 +31,23 @@ public class PresencaRepository {
     }
 
     /**
-     * Busca presenças por CPF.
-     * Retorna uma lista de presenças filtrada pelo CPF e ordenada por timestamp.
+     * Busca presenças por cadastroId.
      *
      * @param cadastroId Cadastro ID.
-     * @return Lista de presenças do participante.
+     * @return Lista de presenças filtradas.
      */
     public List<Presenca> findByCadastroId(String cadastroId) {
-        return presencaTable.scan()
+        return presencaTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(cadastroId).build()))
                 .items()
                 .stream()
-                .filter(presenca -> presenca.getCadastroId().equals(cadastroId))  // Filtra por CPF
-                .sorted(Comparator.comparing(Presenca::getAula))  // Ordena por Aula
                 .collect(Collectors.toList());
     }
 
     /**
      * Busca presenças por CPF.
-     * Retorna uma lista de presenças filtrada pelo CPF e ordenada por timestamp.
      *
      * @param cpf Cpf do cadastro.
-     * @return Lista de presenças do participante.
+     * @return Lista de presenças filtradas.
      */
     public List<Presenca> findByCpf(String cpf) {
         return presencaTable.scan()
@@ -64,21 +58,13 @@ public class PresencaRepository {
                 .collect(Collectors.toList());
     }
 
+
     /**
      * Salva ou atualiza uma presença.
      *
      * @param presenca Objeto presença a ser salvo ou atualizado.
      */
     public void save(Presenca presenca) {
-        presencaTable.putItem(presenca);
-    }
-
-    /**
-     * Salva ou atualiza uma presença.
-     *
-     * @param presenca Objeto PutItemEnhancedRequest<Presenca> a ser salvo ou atualizado.
-     */
-    public void save(PutItemEnhancedRequest<Presenca> presenca) {
         presencaTable.putItem(presenca);
     }
 
@@ -93,16 +79,15 @@ public class PresencaRepository {
     }
 
     /**
-     * Conta o número de presenças de um participante com base no CPF.
+     * Conta o número de presenças de um participante com base no cadastro ID.
      *
      * @param cadastroId Cadastro ID.
      * @return O número de presenças.
      */
     public long countByCadastroId(String cadastroId) {
-        return presencaTable.scan()
+        return presencaTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(cadastroId).build()))
                 .items()
                 .stream()
-                .filter(presenca -> presenca.getCadastroId().equals(cadastroId))
                 .count();
     }
 }

@@ -14,25 +14,55 @@ public class PresencaService {
 
     private final PresencaRepository presencaRepository;
 
-    // List all Presencas
+    /**
+     * Listar todas as presenças.
+     *
+     * @return lista de presenças
+     */
     public List<Presenca> listPresencas() {
         return presencaRepository.findAll();
     }
 
-    // Read Presenca by cadastroId
+    /**
+     * Obter presenças por ID de cadastro.
+     *
+     * @param cadastroId ID do cadastro
+     * @return lista de presenças associadas ao cadastro
+     */
     public List<Presenca> getPresencasByCadastroID(String cadastroId) {
         return presencaRepository.findByCadastroId(cadastroId);
     }
 
-    // Create Presenca
+    /**
+     * Adicionar uma nova presença.
+     *
+     * @param presenca objeto presença a ser adicionado
+     */
     public void addPresenca(Presenca presenca) {
-        String presencaId = UUID.randomUUID().toString();
-        presenca.setId(presencaId);
+        if (presenca == null) {
+            throw new IllegalArgumentException("Presença não pode ser nula");
+        }
+
+        // Gerar e definir um ID único para a nova presença
+        presenca.setId(generateUniqueId());
         presencaRepository.save(presenca);
     }
 
-    // Delete Presenca by ID
+    /**
+     * Deletar uma presença pelo ID.
+     *
+     * @param id ID da presença a ser removida
+     */
     public void deletePresenca(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID da presença não pode ser nulo ou vazio");
+        }
+
         presencaRepository.delete(id);
+    }
+
+    // Método auxiliar para gerar um ID único
+    private String generateUniqueId() {
+        return UUID.randomUUID().toString();
     }
 }

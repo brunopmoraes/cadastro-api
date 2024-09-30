@@ -9,17 +9,19 @@ import br.com.lagoinha.repository.CadastroRepository;
 import br.com.lagoinha.repository.PresencaRepository;
 import br.com.lagoinha.utils.Converter;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.io.IOException;
 import java.util.*;
 
 @AllArgsConstructor
 @Service
-public class ImportarService {
+public class ManutencaoService {
 
     private static final String SPREADSHEET_ID = "1gpyOEAr5tfjPyWHSTg9jBi2fFIxbTS-K2CUXAl4GY2s"; // ID da planilha
     private final CadastroRepository cadastroRepository;
@@ -27,50 +29,37 @@ public class ImportarService {
     private final GoogleSheetsClient googleSheetsClient;
     private final DynamoDbConfig dynamoDbConfig;
 
-
-
     public void importarDados(ImportarDTO importar) throws IOException {
-
         if (importar.isCreateTable()) {
             dynamoDbConfig.createTables();
         }
 
         String range = String.format("%s!A2:F", importar.getSheetName()); // Define o intervalo a ser lido
-
-        // Obtém os dados da planilha
         List<List<Object>> dados = googleSheetsClient.getSpreadsheetData(SPREADSHEET_ID, range);
 
         // Salva os dados no DynamoDB
         salvarDados(dados, importar.getSheetName());
     }
 
-    /**
-     * Salva os dados da planilha no DynamoDB, incluindo cadastros e presenças.
-     *
-     * @param dados     Lista de listas de objetos representando os dados a serem salvos.
-     * @param sheetName Nome da planilha que fornece o contexto para a aula.
-     */
     public void salvarDados(List<List<Object>> dados, String sheetName) {
         for (List<Object> row : dados) {
             Cadastro cadastro = criarCadastro(row);
             Presenca presenca = criarPresenca(sheetName, row, cadastro);
 
-            salvarCadastro(cadastro);
+            if (cadastroRepository.findByCpf(cadastro.getCpf()) == null) {
+                salvarCadastro(cadastro);
+            } else {
+                atualizarCadastro(cadastro);
+            }
             salvarPresencaComCondicao(presenca);
         }
     }
 
-    /**
-     * Cria um objeto Cadastro a partir de uma linha de dados.
-     *
-     * @param row Dados da linha da planilha.
-     * @return Cadastro criado.
-     */
     private Cadastro criarCadastro(List<Object> row) {
         return Cadastro.builder()
                 .id(UUID.randomUUID().toString())
                 .cpf((String) row.get(5))
-                .nomeCompleto(((String) row.get(1)).trim())
+                .nomeCompleto(StringUtils.capitalize((String) row.get(1)).trim())
                 .sexo((String) row.get(2))
                 .email(((String) row.get(3)).toLowerCase().trim())
                 .celular((String) row.get(4))
@@ -78,44 +67,36 @@ public class ImportarService {
                 .build();
     }
 
-    /**
-     * Cria um objeto Presenca a partir de uma linha de dados e o nome da planilha.
-     *
-     * @param sheetName Nome da planilha (aula).
-     * @param row       Dados da linha da planilha.
-     * @return Presenca criada.
-     */
     private Presenca criarPresenca(String sheetName, List<Object> row, Cadastro cadastro) {
         String isoTimestamp = Converter.convertToISO((String) row.get(0));
-        String presencaId = UUID.randomUUID().toString();
-
         return Presenca.builder()
-                .id(presencaId)
+                .id(UUID.randomUUID().toString())
+                .cpf(cadastro.getCpf())
                 .cadastroId(cadastro.getId())
                 .timestamp(isoTimestamp)
                 .aula(sheetName)
                 .build();
     }
 
-    /**
-     * Salva o cadastro no repositório.
-     *
-     * @param cadastro Cadastro a ser salvo.
-     */
     private void salvarCadastro(Cadastro cadastro) {
         cadastroRepository.save(cadastro);
     }
 
-    /**
-     * Salva a presença no repositório, garantindo que não haja duplicação de CPF e aula.
-     *
-     * @param presenca Presença a ser salva.
-     */
-    private void salvarPresencaComCondicao(Presenca presenca) {
-        PutItemEnhancedRequest<Presenca> putItemRequest = construirPutItemRequestComCondicao(presenca);
+    private void atualizarCadastro(Cadastro updatedCadastro) {
+        Cadastro existingCadastro = cadastroRepository.findByCpf(updatedCadastro.getCpf());
 
+        if (existingCadastro != null) {
+            existingCadastro.setNomeCompleto(updatedCadastro.getNomeCompleto());
+            existingCadastro.setEmail(updatedCadastro.getEmail());
+            existingCadastro.setCelular(updatedCadastro.getCelular());
+            existingCadastro.setSexo(updatedCadastro.getSexo());
+            cadastroRepository.save(existingCadastro);
+        }
+    }
+
+    private void salvarPresencaComCondicao(Presenca presenca) {
         try {
-            presencaRepository.save(putItemRequest);
+            presencaRepository.save(presenca);
             System.out.println("Presença registrada com sucesso! - " + presenca.getId() + " / " + presenca.getAula());
         } catch (ConditionalCheckFailedException e) {
             System.out.println("Presença já existente, atualizando... - " + presenca.getId() + " / " + presenca.getAula());
@@ -123,20 +104,16 @@ public class ImportarService {
         }
     }
 
-    /**
-     * Constrói a requisição para salvar a presença com a condição de não duplicar CPF e aula.
-     *
-     * @param presenca Presença que será condicionada.
-     * @return PutItemEnhancedRequest para a operação no DynamoDB.
-     */
     private PutItemEnhancedRequest<Presenca> construirPutItemRequestComCondicao(Presenca presenca) {
-        Map<String, String> expressionNames = new HashMap<>();
-        expressionNames.put("#cadastroId", "cadastroId");
-        expressionNames.put("#aula", "aula");
+        Map<String, String> expressionNames = Map.of(
+                "#cadastroId", "cadastroId",
+                "#aula", "aula"
+        );
 
-        Map<String, AttributeValue> expressionValues = new HashMap<>();
-        expressionValues.put(":cadastroId", AttributeValue.builder().s(presenca.getCadastroId()).build());
-        expressionValues.put(":aula", AttributeValue.builder().s(presenca.getAula()).build());
+        Map<String, AttributeValue> expressionValues = Map.of(
+                ":cadastroId", AttributeValue.builder().s(presenca.getCadastroId()).build(),
+                ":aula", AttributeValue.builder().s(presenca.getAula()).build()
+        );
 
         // Condição para garantir que não haja duplicação de CPF e aula
         Expression conditionExpression = Expression.builder()
@@ -151,17 +128,17 @@ public class ImportarService {
                 .build();
     }
 
-    public void atualizaIdCadastros(){
+    public void atualizaIdCadastros() {
         List<Cadastro> cadastros = cadastroRepository.findAll();
         for (Cadastro cadastro : cadastros) {
-            String cadastroId = Objects.isNull(cadastro.getId()) ? UUID.randomUUID().toString() :  cadastro.getId();
-            if(Objects.isNull(cadastro.getId())) {
+            String cadastroId = Objects.requireNonNullElse(cadastro.getId(), UUID.randomUUID().toString());
+            if (Objects.isNull(cadastro.getId())) {
                 cadastro.setId(cadastroId);
                 cadastroRepository.save(cadastro);
             }
             List<Presenca> presencas = presencaRepository.findByCpf(cadastro.getCpf());
             for (Presenca presenca : presencas) {
-                if(Objects.isNull(presenca.getCadastroId()) || !presenca.getCadastroId().equals(cadastroId)) {
+                if (Objects.isNull(presenca.getCadastroId()) || !presenca.getCadastroId().equals(cadastroId)) {
                     presenca.setCadastroId(cadastroId);
                     presencaRepository.save(presenca);
                 }

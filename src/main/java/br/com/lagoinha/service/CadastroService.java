@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -18,124 +17,74 @@ public class CadastroService {
     private final CadastroRepository cadastroRepository;
     private final PresencaRepository presencaRepository;
 
-    /**
-     * Cria um cadastro.
-     *
-     * @param cadastro objeto de cadastro a ser salvo
-     */
     public void create(Cadastro cadastro) {
         cadastroRepository.save(cadastro);
     }
 
     public void update(String id, Cadastro cadastro) {
-        Cadastro _cadastro = cadastroRepository.findById(id);
-        if (Objects.isNull(_cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado");
-        }
-
-        // Atualiza apenas os campos que foram alterados
-        if (cadastro.getNomeCompleto() != null && !cadastro.getNomeCompleto().equals(_cadastro.getNomeCompleto())) {
-            _cadastro.setNomeCompleto(cadastro.getNomeCompleto());
-        }
-        if (cadastro.getCelular() != null && !cadastro.getCelular().equals(_cadastro.getCelular())) {
-            _cadastro.setCelular(cadastro.getCelular());
-        }
-        if (cadastro.getEmail() != null && !cadastro.getEmail().equals(_cadastro.getEmail())) {
-            _cadastro.setEmail(cadastro.getEmail());
-        }
-        if (cadastro.getSexo() != null && !cadastro.getSexo().equals(_cadastro.getSexo())) {
-            _cadastro.setSexo(cadastro.getSexo());
-        }
-        if (cadastro.isCertificado() != _cadastro.isCertificado()) {
-            _cadastro.setCertificado(cadastro.isCertificado());
-        }
-        if (cadastro.getCpf() != null && !cadastro.getCpf().equals(_cadastro.getCpf())) {
-            _cadastro.setCpf(cadastro.getCpf());
-        }
-
-        // Salva as alterações
-        cadastroRepository.save(_cadastro);
+        Cadastro existingCadastro = findCadastroById(id);
+        updateCadastroFields(existingCadastro, cadastro);
+        cadastroRepository.save(existingCadastro);
     }
 
-    /**
-     * Busca um cadastro por CPF.
-     *
-     * @param id Id a ser buscado
-     * @return Cadastro encontrado com total de presenças
-     * @throws CadastroNotFoundException se o cadastro não for encontrado
-     */
-    public Cadastro getCadastroById(String id) {
-        Cadastro cadastro = cadastroRepository.findById(id);
-        if (Objects.isNull(cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado para o Id: " + id);
-        }
+    private Cadastro findCadastroById(String id) {
+        return cadastroRepository.findById(id)
+                .orElseThrow(() -> new CadastroNotFoundException("Cadastro não encontrado para o ID: " + id));
+    }
 
+    private void updateCadastroFields(Cadastro existingCadastro, Cadastro updatedCadastro) {
+        if (updatedCadastro.getNomeCompleto() != null) {
+            existingCadastro.setNomeCompleto(updatedCadastro.getNomeCompleto());
+        }
+        if (updatedCadastro.getCelular() != null) {
+            existingCadastro.setCelular(updatedCadastro.getCelular());
+        }
+        if (updatedCadastro.getEmail() != null) {
+            existingCadastro.setEmail(updatedCadastro.getEmail());
+        }
+        if (updatedCadastro.getSexo() != null) {
+            existingCadastro.setSexo(updatedCadastro.getSexo());
+        }
+        existingCadastro.setCertificado(updatedCadastro.isCertificado()); // Sem verificação, só atualiza
+        if (updatedCadastro.getCpf() != null) {
+            existingCadastro.setCpf(updatedCadastro.getCpf());
+        }
+    }
+
+    public Cadastro getCadastroById(String id) {
+        Cadastro cadastro = findCadastroById(id);
         List<Presenca> presencas = presencaRepository.findByCadastroId(id);
         cadastro.setPresencas(presencas);
-        // Conta o total de presenças e atualiza no cadastro
-        long totalPresencas = presencas.size();
-        cadastro.setTotalPresencas(totalPresencas);
+        cadastro.setTotalPresencas(presencas.size());
         return cadastro;
     }
 
-    /**
-     * Exclui um cadastro por CPF.
-     *
-     * @param id ID do cadastro a ser excluído
-     */
     public void deleteCadastro(String id) {
-        Cadastro cadastro = cadastroRepository.findById(id);
-        if (Objects.isNull(cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado para o ID: " + id);
-        }
+        Cadastro cadastro = findCadastroById(id);
         cadastroRepository.delete(cadastro);
     }
 
-    /**
-     * Lista todos os cadastros e adiciona o total de presenças para cada um.
-     *
-     * @return Lista de cadastros com total de presenças
-     */
     public List<Cadastro> listCadastros() {
-        return cadastroRepository.findAll()
-                .stream()
-                .peek(cadastro -> {
-                    List<Presenca> presencas = presencaRepository.findByCadastroId(cadastro.getId());
-                    cadastro.setPresencas(presencas);
-                    cadastro.setTotalPresencas(presencas.size());
-                })
+        List<Cadastro> cadastros = cadastroRepository.findAll();
+        return cadastros.stream()
+                .map(this::populateCadastroWithPresencas)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Confirma o recebimento do certificado para um cadastro.
-     *
-     * @param id ID do cadastro a ser atualizado
-     * @return Cadastro atualizado
-     * @throws CadastroNotFoundException se o cadastro não for encontrado
-     */
-    public Cadastro confirmarCertificado(String id) {
-        Cadastro cadastro = cadastroRepository.findById(id);
-        if (Objects.isNull(cadastro)) {
-            throw new CadastroNotFoundException("Cadastro não encontrado para o ID: " + id);
-        }
-
-        // Atualiza o campo de certificado e salva
-        cadastro.setCertificado(true);
-        cadastroRepository.save(cadastro);
+    private Cadastro populateCadastroWithPresencas(Cadastro cadastro) {
+        List<Presenca> presencas = presencaRepository.findByCpf(cadastro.getCpf());
+        cadastro.setPresencas(presencas);
+        cadastro.setTotalPresencas(presencas.size());
         return cadastro;
     }
 
-    /**
-     * Retorna cadastros que completaram 8 presenças, mas ainda não receberam certificado.
-     *
-     * @return Lista de cadastros sem certificado e com 8 presenças
-     */
     public List<Cadastro> completosSemCertificado() {
-        return cadastroRepository.findSemCertificado()
-                .stream()
-                .peek(cadastro -> cadastro.setTotalPresencas(presencaRepository.countByCadastroId(cadastro.getId())))
-                .filter(cadastro -> cadastro.getTotalPresencas() == 8)
+        return cadastroRepository.findSemCertificado().stream()
+                .filter(cadastro -> checkTotalPresenca(cadastro.getId()) == 8)
                 .collect(Collectors.toList());
+    }
+
+    private long checkTotalPresenca(String cadastroId) {
+        return presencaRepository.countByCadastroId(cadastroId);
     }
 }
