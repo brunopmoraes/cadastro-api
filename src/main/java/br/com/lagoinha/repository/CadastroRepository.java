@@ -4,13 +4,10 @@ import br.com.lagoinha.model.Cadastro;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
@@ -30,10 +27,12 @@ public class CadastroRepository {
      * @param id Id do cadastro a ser buscado.
      * @return O cadastro encontrado ou null se não existir.
      */
-    public Optional<Cadastro> findById(String id) {
-        // Aqui você pode fazer a verificação e retornar um Optional
-        Cadastro cadastro = cadastroTable.getItem(Key.builder().partitionValue(id).build());
-        return Optional.ofNullable(cadastro); // Retorna um Optional com o cadastro ou vazio, se não encontrado
+    public Cadastro findById(String id) {
+        return cadastroTable.scan()
+                .items()
+                .stream()
+                .filter(cadastro -> Objects.equals(cadastro.getId(), id)).findFirst()
+                .orElse(null); // Retorna um Optional com o cadastro ou vazio, se não encontrado
     }
 
     /**
@@ -43,11 +42,10 @@ public class CadastroRepository {
      * @return O cadastro encontrado ou null se não existir.
      */
     public Cadastro findByCpf(String cpf) {
-        // Supondo que um índice secundário tenha sido criado para o CPF
-        return cadastroTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(cpf).build())) // Utiliza a condição de consulta correta
+        return cadastroTable.scan()
                 .items()
                 .stream()
-                .findFirst()
+                .filter(cadastro -> Objects.equals(cadastro.getCpf(), cpf)).findFirst()
                 .orElse(null);
     }
 
@@ -70,7 +68,7 @@ public class CadastroRepository {
         return cadastroTable.scan()
                 .items()
                 .stream()
-                .collect(Collectors.toList()); // Coleta os itens em uma lista
+                .collect(Collectors.toList());
     }
 
 

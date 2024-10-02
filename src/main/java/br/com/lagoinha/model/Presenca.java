@@ -20,8 +20,8 @@ public class Presenca {
     private String aula;
 
     @DynamoDbPartitionKey
-    public String getId() {
-        return id;
+    public String getCpf() {
+        return cpf;
 
     }
 }

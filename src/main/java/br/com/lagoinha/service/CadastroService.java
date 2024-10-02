@@ -28,8 +28,19 @@ public class CadastroService {
     }
 
     private Cadastro findCadastroById(String id) {
-        return cadastroRepository.findById(id)
-                .orElseThrow(() -> new CadastroNotFoundException("Cadastro não encontrado para o ID: " + id));
+        Cadastro cadastro = cadastroRepository.findById(id);
+        if(cadastro == null) {
+            throw new CadastroNotFoundException(id);
+        }
+        return cadastro;
+    }
+
+    private Cadastro findCadastroByCpf(String cpf) {
+        Cadastro cadastro = cadastroRepository.findByCpf(cpf);
+        if(cadastro == null) {
+            throw new CadastroNotFoundException(cpf);
+        }
+        return cadastro;
     }
 
     private void updateCadastroFields(Cadastro existingCadastro, Cadastro updatedCadastro) {
@@ -53,7 +64,15 @@ public class CadastroService {
 
     public Cadastro getCadastroById(String id) {
         Cadastro cadastro = findCadastroById(id);
-        List<Presenca> presencas = presencaRepository.findByCadastroId(id);
+        List<Presenca> presencas = presencaRepository.findByCadastro(cadastro);
+        cadastro.setPresencas(presencas);
+        cadastro.setTotalPresencas(presencas.size());
+        return cadastro;
+    }
+
+    public Cadastro getCadastroByCpf(String cpf) {
+        Cadastro cadastro = findCadastroByCpf(cpf);
+        List<Presenca> presencas = presencaRepository.findByCpf(cpf);
         cadastro.setPresencas(presencas);
         cadastro.setTotalPresencas(presencas.size());
         return cadastro;

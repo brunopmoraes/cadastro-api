@@ -1,5 +1,6 @@
 package br.com.lagoinha.repository;
 
+import br.com.lagoinha.model.Cadastro;
 import br.com.lagoinha.model.Presenca;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -42,6 +43,18 @@ public class PresencaRepository {
                 .stream()
                 .collect(Collectors.toList());
     }
+
+    public List<Presenca> findByCadastro(Cadastro cadastro) {
+        return presencaTable.query(
+                        QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(cadastro.getCpf()) // Aqui você deve usar o valor correspondente à chave de partição
+//                                .sortValue(cadastro.getCpf()) // Use o valor correspondente à chave de ordenação
+                                .build()))
+                .items()
+                .stream()
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Busca presenças por CPF.

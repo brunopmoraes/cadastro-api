@@ -62,6 +62,24 @@ public class CadastroController {
         }
     }
 
+    @Operation(summary = "Obtém um cadastro por CPF")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cadastro encontrado"),
+            @ApiResponse(responseCode = "400", description = "CPF inválido"),
+            @ApiResponse(responseCode = "404", description = "Cadastro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    @GetMapping("/cpf/{cpf}")
+    public ResponseEntity<?> getCadastroByCpf(@PathVariable String cpf) {
+        try {
+            Cadastro cadastro = cadastroService.getCadastroByCpf(cpf);
+            return ResponseEntity.ok(cadastro); // Retorna 200 com o cadastro
+        } catch (Exception e) {
+            return HandleException.handleException(e);
+        }
+    }
+
+
     @Operation(summary = "Deleta um cadastro por CPF")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Cadastro deletado com sucesso"),

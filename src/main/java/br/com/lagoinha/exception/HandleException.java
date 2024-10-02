@@ -9,6 +9,6 @@ public class HandleException {
         if (e instanceof CadastroNotFoundException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404
         }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Retorna 500
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()); // Retorna 500
     }
 }
