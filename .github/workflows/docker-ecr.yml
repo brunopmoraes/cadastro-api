@@ -35,7 +35,7 @@ jobs:
       # Step 4: Authenticate with ECR (Jib will push to ECR)
       - name: Authenticate to Amazon ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 881490088770.dkr.ecr.us-east-1.amazonaws.com
 
       # Step 5: Build and push the Docker image using Jib
       - name: Build and Push Docker image to ECR
