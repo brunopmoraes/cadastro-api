@@ -130,7 +130,7 @@
                 <version>3.1.4</version>
                 <configuration>
                     <to>
-                        <image>881490088770.dkr.ecr.us-east-1.amazonaws.com/lagoinha/cadastro-api</image>
+                        <image>881490088770.dkr.ecr.us-east-1.amazonaws.com/lagoinha</image>
                     </to>
                 </configuration>
             </plugin>
