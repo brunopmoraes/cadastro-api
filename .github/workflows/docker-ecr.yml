@@ -48,11 +48,11 @@ jobs:
           terraform_version: 1.0.0  # Substitua pela versão do Terraform que você precisa
 
       - name: Inicializar o Terraform
-        run: terraform init
+        run: terraform -chdir=infra/terraform init
 
       - name: Planejar o Terraform
-        run: terraform plan
+        run: terraform -chdir=infra/terraform plan
 
       - name: Aplicar o Terraform
-        run: terraform apply -auto-approve
+        run: terraform -chdir=infra/terraform apply -auto-approve
 
