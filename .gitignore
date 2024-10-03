@@ -22,7 +22,7 @@ target/
 .sts4-cache
 
 ### NetBeans ###
-/nbproject/private/
+/nbproject/private/di
 /nbbuild/
 /dist/
 /nbdist/
@@ -36,3 +36,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+/src/main/resources/application.properties
+/infra/terraform/.terraform/
+/infra/terraform/.terraform.lock.hcl
+/infra/terraform/terraform.tfstate
+/infra/terraform/terraform.tfstate.backup
