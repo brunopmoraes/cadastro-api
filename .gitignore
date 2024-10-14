@@ -4,6 +4,7 @@
 
 # User-specific stuff
 .idea/
+ *.iml
 
 ### macOS template
 # General
@@ -12,3 +13,4 @@
 target/
 
 
+**.iml
