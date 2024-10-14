@@ -1,8 +1,11 @@
 package br.com.lagoinha.service;
 
+import br.com.lagoinha.model.Cadastro;
 import br.com.lagoinha.model.Presenca;
 import br.com.lagoinha.repository.PresencaRepository;
+import br.com.lagoinha.utils.ValidadorCPF;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,6 +16,7 @@ import java.util.UUID;
 public class PresencaService {
 
     private final PresencaRepository presencaRepository;
+    private final CadastroService cadastroService;
 
     /**
      * Listar todas as presenças.
@@ -42,7 +46,13 @@ public class PresencaService {
         if (presenca == null) {
             throw new IllegalArgumentException("Presença não pode ser nula");
         }
-
+        if (!ValidadorCPF.validarCPF(presenca.getCpf())) {
+            throw new IllegalArgumentException("CPF inválido");
+        }
+        Cadastro cadastro = cadastroService.getCadastroByCpf(presenca.getCpf());
+        if(cadastro == null) {
+            throw new IllegalArgumentException("Cadastro não encontrado para o CPF informado");
+        }
         // Gerar e definir um ID único para a nova presença
         presenca.setId(generateUniqueId());
         presencaRepository.save(presenca);
