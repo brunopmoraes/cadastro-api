@@ -5,7 +5,6 @@ import br.com.lagoinha.model.Presenca;
 import br.com.lagoinha.repository.PresencaRepository;
 import br.com.lagoinha.utils.ValidadorCPF;
 import lombok.AllArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
