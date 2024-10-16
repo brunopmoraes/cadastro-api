@@ -18,6 +18,8 @@ public class Presenca {
     private String cadastroId;
     private String timestamp;
     private String aula;
+    private double latitude;
+    private double longitude;
 
     @DynamoDbPartitionKey
     public String getCpf() {

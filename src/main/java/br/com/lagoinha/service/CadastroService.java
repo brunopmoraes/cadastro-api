@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -18,6 +19,7 @@ public class CadastroService {
     private final PresencaRepository presencaRepository;
 
     public void create(Cadastro cadastro) {
+        cadastro.setId(generateUniqueId());
         cadastroRepository.save(cadastro);
     }
 
@@ -105,5 +107,10 @@ public class CadastroService {
 
     private long checkTotalPresenca(String cadastroId) {
         return presencaRepository.countByCadastroId(cadastroId);
+    }
+
+    // Método auxiliar para gerar um ID único
+    private String generateUniqueId() {
+        return UUID.randomUUID().toString();
     }
 }

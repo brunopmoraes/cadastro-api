@@ -1,8 +1,9 @@
-package br.com.lagoinha.client;
+package br.com.lagoinha.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
@@ -12,15 +13,17 @@ public class DynamoDbConfig {
     private final DynamoDbClient dynamoDbClient;
 
     public DynamoDbConfig() {
-        this.dynamoDbClient = DynamoDbClient.builder().build();
+        // Inicialize o cliente DynamoDb com a região apropriada
+        this.dynamoDbClient = DynamoDbClient.builder()
+                .region(Region.US_EAST_1) // Defina a região aqui
+                .build();
     }
 
     @Bean
     public DynamoDbEnhancedClient dynamoDbEnhancedClient() {
-        DynamoDbClient dynamoDbClient = DynamoDbClient.create(); // You can customize your client as needed
         return DynamoDbEnhancedClient.builder()
-                .dynamoDbClient(dynamoDbClient)
-                .build();
+                .dynamoDbClient(dynamoDbClient) // Use o cliente já construído
+            .build();
     }
 
     public void createTables() {

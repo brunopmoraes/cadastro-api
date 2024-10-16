@@ -40,7 +40,7 @@ public class Cadastro {
 
     // Método getter para o celular formatado
     public String getCelularFormatado() {
-        return FormatterUtils.formatString(celular, "(##) ####-####");
+        return FormatterUtils.formatString(celular, "(##) #####-####");
     }
 
 }
