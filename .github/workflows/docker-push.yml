@@ -40,8 +40,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build . -t 881490088770.dkr.ecr.your-region.amazonaws.com/lagoinha/cadastro-api:latest
+          docker build . -t 881490088770.dkr.ecr.us-east-1.amazonaws.com/lagoinha/cadastro-api:latest
 
       - name: Push Docker image to ECR
         run: |
-          docker push 881490088770.dkr.ecr.your-region.amazonaws.com/lagoinha/cadastro-api:latest
+          docker push 881490088770.dkr.ecr.us-east-1.amazonaws.com/lagoinha/cadastro-api:latest
